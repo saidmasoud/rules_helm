@@ -70,3 +70,14 @@ This defines targets you can now use to manage the release:
 
 You could now install, test, and clean up the chart via:
 `bazel run :a_great_release.install.wait && bazel run :a_great_release.test && bazel run :a_great_release.delete`
+
+### Dependencies
+
+```
+helm_chart(
+    name = "chart",
+    srcs = glob(["**"]),
+    update_deps = True,
+    repositories = ["https://kubernetes-charts.storage.googleapis.com/"]
+)
+```

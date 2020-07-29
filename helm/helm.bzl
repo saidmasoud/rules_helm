@@ -12,7 +12,7 @@ export HELM=\$$(rlocation com_github_deviavir_rules_helm/helm)
 PATH=\$$(dirname \$$HELM):\$$PATH
 """
 
-def helm_chart(name, srcs, update_deps = False):
+def helm_chart(name, srcs, update_deps = False, repositories = None):
     """Defines a helm chart (directory containing a Chart.yaml).
 
     Args:
@@ -23,6 +23,9 @@ def helm_chart(name, srcs, update_deps = False):
     filegroup_name = name + "_filegroup"
     helm_cmd_name = name + "_package.sh"
     package_flags = ""
+    repo_adds = []
+    for repo in repositories:
+        repo_adds.append("$(location @com_github_deviavir_rules_helm//:helm) repo add {} {}".format(repo, repo))
     if update_deps:
         package_flags = "--dependency-update"
     native.filegroup(
@@ -43,9 +46,12 @@ for s in $(SRCS); do
     break
   fi
 done
+{repo_adds}
+$(location @com_github_deviavir_rules_helm//:helm) repo update
 $(location @com_github_deviavir_rules_helm//:helm) package {package_flags} $$CHARTLOC
 mv *tgz $@
 """.format(
+            "\n".join(repo_adds),
             package_flags = package_flags,
         ),
     )
