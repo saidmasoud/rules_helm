@@ -12,7 +12,7 @@ export HELM=\$$(rlocation com_github_deviavir_rules_helm/helm)
 PATH=\$$(dirname \$$HELM):\$$PATH
 """
 
-def helm_chart(name, srcs, update_deps = False):
+def helm_chart(name, srcs, update_deps = False, repositories = None):
     """Defines a helm chart (directory containing a Chart.yaml).
 
     Args:
@@ -23,11 +23,17 @@ def helm_chart(name, srcs, update_deps = False):
     filegroup_name = name + "_filegroup"
     helm_cmd_name = name + "_package.sh"
     package_flags = ""
+    repo_adds = []
+    counter = 0
+    if repositories:
+        for repo in repositories:
+            counter += 1
+            repo_adds.append("$(location @com_github_deviavir_rules_helm//:helm) repo add bazel{} {}".format(counter, repo))
     if update_deps:
         package_flags = "--dependency-update"
     native.filegroup(
         name = filegroup_name,
-        srcs = srcs,
+        srcs = srcs
     )
     native.genrule(
         name = name,
@@ -43,11 +49,19 @@ for s in $(SRCS); do
     break
   fi
 done
+export XDG_CACHE_HOME=".helm/cache"
+export XDG_CONFIG_HOME=".helm/config"
+export XDG_DATA_HOME=".helm/data"
+mkdir -p .helm/cache .helm/config .helm/data
+{repo_adds}
+$(location @com_github_deviavir_rules_helm//:helm) repo update || true
 $(location @com_github_deviavir_rules_helm//:helm) package {package_flags} $$CHARTLOC
 mv *tgz $@
+rm -rf .helm
 """.format(
-            package_flags = package_flags,
-        ),
+            repo_adds = "\n".join(repo_adds),
+            package_flags = package_flags
+        )
     )
 
 def _build_helm_set_args(values):
@@ -66,7 +80,7 @@ def _helm_cmd(cmd, args, name, helm_cmd_name, values_yaml = None, values = None)
         srcs = [helm_cmd_name],
         deps = ["@bazel_tools//tools/bash/runfiles"],
         data = binary_data,
-        args = args,
+        args = args
     )
 
 def helm_release(name, release_name, chart, values_yaml = None, values = None, namespace = ""):
@@ -116,7 +130,7 @@ else
     helm \$$@ """ + release_name + " --namespace \$$NS " + """
 fi
 
-EOF""",
+EOF"""
     )
     _helm_cmd("install", ["upgrade", "--install"], name, helm_cmd_name, values_yaml, values)
     _helm_cmd("install.wait", ["upgrade", "--install", "--wait"], name, helm_cmd_name, values_yaml, values)
