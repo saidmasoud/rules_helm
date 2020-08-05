@@ -145,6 +145,7 @@ else
 fi
 rm -rf .helm
 EOF"""
+    )
     _helm_cmd("install", ["upgrade", "--install"], name, helm_cmd_name, values_yaml, values)
     _helm_cmd("install.wait", ["upgrade", "--install", "--wait"], name, helm_cmd_name, values_yaml, values)
     _helm_cmd("status", ["status"], name, helm_cmd_name)
