@@ -19,6 +19,7 @@ def helm_chart(name, srcs, update_deps = False, repositories = None):
         name: A unique name for this rule.
         srcs: Source files to include as the helm chart. Typically this will just be glob(["**"]).
         update_deps: Whether or not to run a helm dependency update prior to packaging.
+        repositories: A list of repositories to add and update to potentially be used as requirements/dependencies.
     """
     filegroup_name = name + "_filegroup"
     helm_cmd_name = name + "_package.sh"
@@ -100,10 +101,11 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, r
         chart: The chart defined by helm_chart.
         values_yaml: The values.yaml file to supply for the release.
         values: A map of additional values to supply for the release.
+        repository: A URL to a repository to install $chart from.
         namespace: The namespace to install the release into. If empty will default the NAMESPACE environment variable and will fall back the the current username (via BUILD_USER).
     """
     helm_cmd_name = name + "_run_helm_cmd.sh"
-    genrule_srcs = ["@com_github_deviavir_rules_helm//:runfiles_bash", chart]
+    genrule_srcs = ["@com_github_deviavir_rules_helm//:runfiles_bash"]
 
     # build --set params
     set_params = _build_helm_set_args(values)
@@ -112,6 +114,8 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, r
     if repository:
       repo_adds.append("helm repo add bazel1 {}".format(repository))
       repo_adds.append("helm repo update")
+    else:
+      genrule_srcs.append(chart)
 
     # build --values param
     values_param = ""
