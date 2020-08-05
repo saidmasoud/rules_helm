@@ -83,7 +83,7 @@ def _helm_cmd(cmd, args, name, helm_cmd_name, values_yaml = None, values = None)
         args = args
     )
 
-def helm_release(name, release_name, chart, values_yaml = None, values = None, namespace = ""):
+def helm_release(name, release_name, chart, values_yaml = None, values = None, repository = None, namespace = ""):
     """Defines a helm release.
 
     A given target has the following executable targets generated:
@@ -108,6 +108,11 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, n
     # build --set params
     set_params = _build_helm_set_args(values)
 
+    repo_adds = []
+    if repository:
+      repo_adds.append("helm repo add bazel1 {}".format(repository))
+      repo_adds.append("helm repo update")
+
     # build --values param
     values_param = ""
     if values_yaml:
@@ -120,17 +125,34 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, n
         srcs = genrule_srcs,
         outs = [helm_cmd_name],
         cmd = HELM_CMD_PREFIX + """
-export CHARTLOC=$(location """ + chart + """)
-EXPLICIT_NAMESPACE=""" + namespace + """
+export XDG_CACHE_HOME=".helm/cache"
+export XDG_CONFIG_HOME=".helm/config"
+export XDG_DATA_HOME=".helm/data"
+mkdir -p .helm/cache .helm/config .helm/data
+{repo_adds}
+if [ -z "{repository}" ]; then
+  export CHARTLOC=$(location {chart})
+else
+  export CHARTLOC=bazel1/{chart}
+fi
+EXPLICIT_NAMESPACE={namespace}
 NAMESPACE=\$${EXPLICIT_NAMESPACE:-\$$NAMESPACE}
 export NS=\$${NAMESPACE:-\$${BUILD_USER}}
 if [ "\$$1" == "upgrade" ]; then
-    helm \$$@ """ + release_name + " \$$CHARTLOC --namespace \$$NS " + set_params + " " + values_param + """
+    helm \$$@ {release_name} \$$CHARTLOC --namespace \$$NS {set_params} {values_param}
 else
-    helm \$$@ """ + release_name + " --namespace \$$NS " + """
+    helm \$$@ {release_name} --namespace \$$NS
 fi
-
-EOF"""
+rm -rf .helm
+EOF""".format(
+          chart = chart,
+          namespace = namespace,
+          release_name = release_name,
+          set_params = set_params,
+          values_param = values_param,
+          repo_adds = "\n".join(repo_adds),
+          repository = repository,
+        )
     )
     _helm_cmd("install", ["upgrade", "--install"], name, helm_cmd_name, values_yaml, values)
     _helm_cmd("install.wait", ["upgrade", "--install", "--wait"], name, helm_cmd_name, values_yaml, values)
