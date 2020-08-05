@@ -129,31 +129,22 @@ export XDG_CACHE_HOME=".helm/cache"
 export XDG_CONFIG_HOME=".helm/config"
 export XDG_DATA_HOME=".helm/data"
 mkdir -p .helm/cache .helm/config .helm/data
-{repo_adds}
-if [ -z "{repository}" ]; then
-  export CHARTLOC=$(location {chart})
+""" + "\n".join(repo_adds) + """
+if [ -z """ + "\"" + repository + "\"" + """]; then
+  export CHARTLOC=$(location """ + chart + """)
 else
-  export CHARTLOC=bazel1/{chart}
+  export CHARTLOC=bazel1/""" + chart + """
 fi
-EXPLICIT_NAMESPACE={namespace}
+EXPLICIT_NAMESPACE=""" + namespace + """
 NAMESPACE=\$${EXPLICIT_NAMESPACE:-\$$NAMESPACE}
 export NS=\$${NAMESPACE:-\$${BUILD_USER}}
 if [ "\$$1" == "upgrade" ]; then
-    helm \$$@ {release_name} \$$CHARTLOC --namespace \$$NS {set_params} {values_param}
+    helm \$$@ """ + release_name + " \$$CHARTLOC --namespace \$$NS " + set_params + " " + values_param + """
 else
-    helm \$$@ {release_name} --namespace \$$NS
+    helm \$$@ """ + release_name + " --namespace \$$NS " + """
 fi
 rm -rf .helm
-EOF""".format(
-          chart = chart,
-          namespace = namespace,
-          release_name = release_name,
-          set_params = set_params,
-          values_param = values_param,
-          repo_adds = "\n".join(repo_adds),
-          repository = repository,
-        )
-    )
+EOF"""
     _helm_cmd("install", ["upgrade", "--install"], name, helm_cmd_name, values_yaml, values)
     _helm_cmd("install.wait", ["upgrade", "--install", "--wait"], name, helm_cmd_name, values_yaml, values)
     _helm_cmd("status", ["status"], name, helm_cmd_name)
