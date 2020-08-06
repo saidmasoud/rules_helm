@@ -6,7 +6,7 @@ cat $(location @com_github_deviavir_rules_helm//:runfiles_bash) >> $@
 echo "export NAMESPACE=$$(grep NAMESPACE bazel-out/stable-status.txt | cut -d ' ' -f 2)" >> $@
 echo "export BUILD_USER=$$(grep BUILD_USER bazel-out/stable-status.txt | cut -d ' ' -f 2)" >> $@
 cat <<EOF >> $@
-#export RUNFILES_LIB_DEBUG=1 # For runfiles debugging
+export RUNFILES_LIB_DEBUG=1 # For runfiles debugging
 
 export HELM=\$$(rlocation com_github_deviavir_rules_helm/helm)
 PATH=\$$(dirname \$$HELM):\$$PATH
@@ -110,10 +110,16 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, r
     # build --set params
     set_params = _build_helm_set_args(values)
 
+    chartloc = "$(location {})".format(chart)
+
     repo_adds = []
     if repository:
-      repo_adds.append("helm repo add bazel1 {}".format(repository))
+      repo_name = "bazel1"
+      if len(chart.split("/")) > 1:
+        repo_name = chart.split("/")[0]
+      repo_adds.append("helm repo add {} {}".format(repo_name, repository))
       repo_adds.append("helm repo update")
+      chartloc = chart
     else:
       genrule_srcs.append(chart)
 
@@ -134,11 +140,7 @@ export XDG_CONFIG_HOME=".helm/config"
 export XDG_DATA_HOME=".helm/data"
 mkdir -p .helm/cache .helm/config .helm/data
 """ + "\n".join(repo_adds) + """
-if [ -z """ + "\"" + repository + "\"" + """]; then
-  export CHARTLOC=$(location """ + chart + """)
-else
-  export CHARTLOC=bazel1/""" + chart + """
-fi
+export CHARTLOC=""" + chartloc + """
 EXPLICIT_NAMESPACE=""" + namespace + """
 NAMESPACE=\$${EXPLICIT_NAMESPACE:-\$$NAMESPACE}
 export NS=\$${NAMESPACE:-\$${BUILD_USER}}
