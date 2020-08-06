@@ -125,9 +125,8 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, r
         repo_adds.append("helm repo add {} {}".format(repo_name, repository))
         repo_adds.append("helm repo update")
         chartloc = "{}/{}".format(repo_name, chart_name)
-        if not version:
-            version = "latest"
-        set_version = "--version {} ".format(version)
+        if version:
+            set_version = "--version {} ".format(version)
     else:
         genrule_srcs.append(chart)
 
