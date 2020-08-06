@@ -115,11 +115,13 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, r
     repo_adds = []
     if repository:
       repo_name = "bazel1"
+      chart_name = chart
       if len(chart.split("/")) > 1:
         repo_name = chart.split("/")[0]
+        chart_name = chart.split("/")[1]
       repo_adds.append("helm repo add {} {}".format(repo_name, repository))
       repo_adds.append("helm repo update")
-      chartloc = chart
+      chartloc = "{}/{}".format(repo_name, chart_name)
     else:
       genrule_srcs.append(chart)
 
