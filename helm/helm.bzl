@@ -19,6 +19,7 @@ def helm_chart(name, srcs, update_deps = False, repositories = None):
         name: A unique name for this rule.
         srcs: Source files to include as the helm chart. Typically this will just be glob(["**"]).
         update_deps: Whether or not to run a helm dependency update prior to packaging.
+        repositories: A list of repositories to add and update to potentially be used as requirements/dependencies.
     """
     filegroup_name = name + "_filegroup"
     helm_cmd_name = name + "_package.sh"
@@ -83,7 +84,7 @@ def _helm_cmd(cmd, args, name, helm_cmd_name, values_yaml = None, values = None)
         args = args
     )
 
-def helm_release(name, release_name, chart, values_yaml = None, values = None, namespace = ""):
+def helm_release(name, release_name, chart, values_yaml = None, values = None, repository = None, version = None, namespace = ""):
     """Defines a helm release.
 
     A given target has the following executable targets generated:
@@ -100,13 +101,34 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, n
         chart: The chart defined by helm_chart.
         values_yaml: The values.yaml file to supply for the release.
         values: A map of additional values to supply for the release.
+        repository: A URL to a repository to install $chart from.
+        version: When pulling a chart from the $repository, which version should we install? Defaults to latest.
         namespace: The namespace to install the release into. If empty will default the NAMESPACE environment variable and will fall back the the current username (via BUILD_USER).
     """
     helm_cmd_name = name + "_run_helm_cmd.sh"
-    genrule_srcs = ["@com_github_deviavir_rules_helm//:runfiles_bash", chart]
+    genrule_srcs = ["@com_github_deviavir_rules_helm//:runfiles_bash"]
 
     # build --set params
     set_params = _build_helm_set_args(values)
+
+    chartloc = "$(location {})".format(chart)
+
+    set_version = ""
+
+    repo_adds = []
+    if repository:
+        repo_name = "bazel1"
+        chart_name = chart
+        if len(chart.split("/")) > 1:
+            repo_name = chart.split("/")[0]
+            chart_name = chart.split("/")[1]
+        repo_adds.append("helm repo add {} {}".format(repo_name, repository))
+        repo_adds.append("helm repo update")
+        chartloc = "{}/{}".format(repo_name, chart_name)
+        if version:
+            set_version = "--version {} ".format(version)
+    else:
+        genrule_srcs.append(chart)
 
     # build --values param
     values_param = ""
@@ -120,16 +142,21 @@ def helm_release(name, release_name, chart, values_yaml = None, values = None, n
         srcs = genrule_srcs,
         outs = [helm_cmd_name],
         cmd = HELM_CMD_PREFIX + """
-export CHARTLOC=$(location """ + chart + """)
+export XDG_CACHE_HOME=".helm/cache"
+export XDG_CONFIG_HOME=".helm/config"
+export XDG_DATA_HOME=".helm/data"
+mkdir -p .helm/cache .helm/config .helm/data
+""" + "\n".join(repo_adds) + """
+export CHARTLOC=""" + chartloc + """
 EXPLICIT_NAMESPACE=""" + namespace + """
 NAMESPACE=\$${EXPLICIT_NAMESPACE:-\$$NAMESPACE}
 export NS=\$${NAMESPACE:-\$${BUILD_USER}}
 if [ "\$$1" == "upgrade" ]; then
-    helm \$$@ """ + release_name + " \$$CHARTLOC --namespace \$$NS " + set_params + " " + values_param + """
+    helm \$$@ """ + release_name + " \$$CHARTLOC --namespace \$$NS " + set_version + "" + set_params + " " + values_param + """
 else
     helm \$$@ """ + release_name + " --namespace \$$NS " + """
 fi
-
+rm -rf .helm
 EOF"""
     )
     _helm_cmd("install", ["upgrade", "--install"], name, helm_cmd_name, values_yaml, values)
