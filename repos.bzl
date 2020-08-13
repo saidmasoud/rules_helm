@@ -12,14 +12,14 @@ def helm_repositories():
 
     http_archive(
         name = "helm",
-        sha256 = "c6b7aa7e4ffc66e8abb4be328f71d48c643cb8f398d95c74d075cfb348710e1d",
-        urls = ["https://get.helm.sh/helm-v3.0.2-linux-amd64.tar.gz"],
+        sha256 = "ff4ac230b73a15d66770a65a037b07e08ccbce6833fbd03a5b84f06464efea45",
+        urls = ["https://get.helm.sh/helm-v3.3.0-linux-amd64.tar.gz"],
         build_file = "@com_github_deviavir_rules_helm//:helm.BUILD",
     )
 
     http_archive(
         name = "helm_osx",
-        sha256 = "05c7748da0ea8d5f85576491cd3c615f94063f20986fd82a0f5658ddc286cdb1",
-        urls = ["https://get.helm.sh/helm-v3.0.2-darwin-amd64.tar.gz"],
+        sha256 = "3399430b0fdfa8c840e77ddb4410d762ae64f19924663dbdd93bcd0e22704e0b",
+        urls = ["https://get.helm.sh/helm-v3.3.0-darwin-amd64.tar.gz"],
         build_file = "@com_github_deviavir_rules_helm//:helm.BUILD",
     )
