@@ -38,20 +38,19 @@ export HELM_HOME="$(pwd)/.helm"
 export PATH="$(dirname $BINARY):$PATH"
 
 pwd
-# echo "Build working dir: ${BUILD_WORKING_DIRECTORY}"
 cd "${BUILD_WORKING_DIRECTORY:-}"
 pwd
 
-# cd to workspace root
-# while [ $PWD != "/" ]; do
-#     if [[ -e "WORKSPACE" ]] ; then
-#         break
-#     fi
-#     cd $(dirname $PWD)
-#     echo "moved to $PWD"
-# done
 
-# ls -lthra
+while [ $PWD != "/" ]; do
+    if [[ -e "WORKSPACE" ]] ; then
+        break
+    fi
+    cd $(dirname $PWD)
+    echo "moved to $PWD"
+done
+
+ls -lthra
 echo "Running in $PWD"
 
 cd "${BUILD_WORKING_DIRECTORY:-}"
