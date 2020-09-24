@@ -53,5 +53,4 @@ pwd
 ls -lthra
 echo "Running in $PWD"
 
-cd "${BUILD_WORKING_DIRECTORY:-}"
 helm $*
