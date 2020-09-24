@@ -151,15 +151,6 @@ export CHARTLOC=""" + chartloc + """
 EXPLICIT_NAMESPACE=""" + namespace + """
 NAMESPACE=\$${EXPLICIT_NAMESPACE:-\$$NAMESPACE}
 export NS=\$${NAMESPACE:-\$${BUILD_USER}}
-
-while [ \$$PWD != "/" ]; do
-    if [[ -e "WORKSPACE" ]] ; then
-        break
-    fi
-    cd \$$(dirname \$$PWD)
-    echo "moved to $$PWD"
-done
-
 if [ "\$$1" == "upgrade" ]; then
     helm \$$@ """ + release_name + " \$$CHARTLOC --namespace \$$NS " + set_version + "" + set_params + " " + values_param + """
 else
