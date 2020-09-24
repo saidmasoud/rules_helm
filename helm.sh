@@ -42,7 +42,7 @@ echo "Build working dir: ${BUILD_WORKING_DIRECTORY}"
 cd "${BUILD_WORKING_DIRECTORY:-}"
 pwd
 
-cd to workspace root
+# cd to workspace root
 while [ $PWD != "/" ]; do
     if [[ -e "WORKSPACE" ]] ; then
         break
