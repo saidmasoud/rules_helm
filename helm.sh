@@ -42,13 +42,13 @@ cd "${BUILD_WORKING_DIRECTORY:-}"
 pwd
 
 
-while [ $PWD != "/" ]; do
-    if [[ -e "WORKSPACE" ]] ; then
-        break
-    fi
-    cd $(dirname $PWD)
-    echo "moved to $PWD"
-done
+# while [ $PWD != "/" ]; do
+#     if [[ -e "WORKSPACE" ]] ; then
+#         break
+#     fi
+#     cd $(dirname $PWD)
+#     echo "moved to $PWD"
+# done
 
 ls -lthra
 echo "Running in $PWD"
