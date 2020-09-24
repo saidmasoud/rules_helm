@@ -8,7 +8,7 @@ echo "export BUILD_USER=$$(grep BUILD_USER bazel-out/stable-status.txt | cut -d 
 cat <<EOF >> $@
 #export RUNFILES_LIB_DEBUG=1 # For runfiles debugging
 
-export HELM=\$$(rlocation com_saidmasoud_deviavir_rules_helm/helm)
+export HELM=\$$(rlocation com_github_saidmasoud_rules_helm/helm)
 PATH=\$$(dirname \$$HELM):\$$PATH
 """
 
