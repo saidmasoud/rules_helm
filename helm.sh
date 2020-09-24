@@ -2,7 +2,7 @@
 
 # --- begin runfiles.bash initialization ---
 # Copy-pasted from Bazel's Bash runfiles library (tools/bash/runfiles/runfiles.bash).
-set -eo pipefail
+set -euo pipefail
 if [[ ! -d "${RUNFILES_DIR:-/dev/null}" && ! -f "${RUNFILES_MANIFEST_FILE:-/dev/null}" ]]; then
   if [[ -f "$0.runfiles_manifest" ]]; then
     export RUNFILES_MANIFEST_FILE="$0.runfiles_manifest"
@@ -38,7 +38,7 @@ export HELM_HOME="$(pwd)/.helm"
 export PATH="$(dirname $BINARY):$PATH"
 
 pwd
-echo "Build working dir: ${BUILD_WORKING_DIRECTORY}"
+# echo "Build working dir: ${BUILD_WORKING_DIRECTORY}"
 cd "${BUILD_WORKING_DIRECTORY:-}"
 pwd
 
