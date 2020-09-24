@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 # --- begin runfiles.bash initialization ---
 # Copy-pasted from Bazel's Bash runfiles library (tools/bash/runfiles/runfiles.bash).
-set -euo pipefail
+set -eo pipefail
 if [[ ! -d "${RUNFILES_DIR:-/dev/null}" && ! -f "${RUNFILES_MANIFEST_FILE:-/dev/null}" ]]; then
   if [[ -f "$0.runfiles_manifest" ]]; then
     export RUNFILES_MANIFEST_FILE="$0.runfiles_manifest"
@@ -37,6 +36,23 @@ fi
 
 export HELM_HOME="$(pwd)/.helm"
 export PATH="$(dirname $BINARY):$PATH"
+
+pwd
+echo "Build working dir: ${BUILD_WORKING_DIRECTORY}"
+cd "${BUILD_WORKING_DIRECTORY:-}"
+pwd
+
+# cd to workspace root
+while [ $PWD != "/" ]; do
+    if [[ -e "WORKSPACE" ]] ; then
+        break
+    fi
+    cd $(dirname $PWD)
+    echo "moved to $PWD"
+done
+
+# ls -lthra
+echo "Running in $PWD"
 
 cd "${BUILD_WORKING_DIRECTORY:-}"
 helm $*
